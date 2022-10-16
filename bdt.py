@@ -31,10 +31,10 @@ small_sample = False
 plot_inputs = False
 
 # read in signal an bkg train data 
-sig = pd.read_csv('sig.csv')
-bkg = pd.read_csv('bkg.csv')
+sig = pd.read_csv('inputs/sig.csv')
+bkg = pd.read_csv('inputs/bkg.csv')
 # read in ti-data, to make predictions on the fly
-ti_data = pd.read_csv('ti_data.csv')
+ti_data = pd.read_csv('inputs/ti_data.csv')
 
 cols = ['y1_pt', 'y1_eta', 'y1_phi', 'y1_e','y2_pt', 'y2_eta', 'y2_phi', 'y2_e', 'myy']
 
@@ -128,7 +128,7 @@ result = pd.concat([Y[0:ntest],X[0:ntest],myy[0:ntest],pred], axis=1)
 print('storing prediction results')
 print(result.head(10))
 print(result.shape)
-result.to_csv('bdt_out.csv')
+result.to_csv('inputs/bdt_out.csv')
 
 print('running predictions on TI data:')
 ti_preds = bst.predict(dti)
@@ -137,4 +137,4 @@ ti_result = pd.concat([ti_Y,ti_X,ti_myy,ti_pred], axis=1)
 print('storing prediction results')
 print(ti_result.head(10))
 print(ti_result.shape)
-ti_result.to_csv('ti_bdt_out.csv')
+ti_result.to_csv('inputs/ti_bdt_out.csv')

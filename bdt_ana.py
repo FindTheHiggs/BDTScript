@@ -68,11 +68,6 @@ xrange=xmaxrange-xminrange
 plt.xlim([0.0, xmaxrange])
 plt.ylim([yminrange, ymaxrange])
 
-#plt.legend(bbox_to_anchor=(1.0, 1.0), loc="upper right",prop={'size': use_legend_font_size},frameon=False)
-#plt.text(0.015, 0.008,"Sherpa 2.2.0 @ NLO\nPhoton Selection:\n"+r'$\mathrm{p}_\mathrm{T}(\gamma1) \cdot \mathrm{p}_\mathrm{T}(\gamma2)>20\,\mathrm{GeV}^2$'+ "\nATLAS detector response:\nRivet folding",fontsize=use_legtit_font_size, color='gray',verticalalignment="bottom")
-#plt.text(0.015, 0.008,"Sherpa 2.2.0 @ NLO"+"\nATLAS detector response:\nRivet folding",fontsize=use_legtit_font_size, color='gray',verticalalignment="bottom")
-#plt.text(0.015, ymaxrange-0.12*yspan,"CHAOS",fontsize=use_font_size, verticalalignment="bottom", color='black')
-
 plt.savefig("bdt_disc.png", bbox_inches='tight', dpi=500)
 plt.savefig("bdt_disc.pdf", bbox_inches='tight')
 plt.show()  
@@ -81,10 +76,20 @@ plt.show()
 plt.figure()
 pred_cut=0.85
 
+
 myy_low=105.
 myy_high=160.
 myy_sig_low=121.
 myy_sig_high=129.
+
+# plot boundary settings: 
+yminrange=0.0
+ymaxrange=38.0
+yspan=ymaxrange-yminrange
+xminrange=myy_low
+xmaxrange=myy_high
+xspan=xmaxrange-xminrange
+
 
 data=(data[data['pred']>pred_cut])
 data=data[(data['myy']>myy_low) & (data['myy']<myy_high)]
@@ -102,36 +107,50 @@ nti_sigreg = ti_data[(ti_data['myy']>myy_sig_low) & (ti_data['myy']<myy_sig_high
 nsig = _sig.shape[0]
 nbkg = _bkg.shape[0]
 nti=ti_data.shape[0]
-print(nti,nti_sigreg)
+print("ntni data: total, sig region:", nti,nti_sigreg)
+
+# set norm factors for sig and BKG predictions, based on TI data:
+expected_sigreg_yield = 120. # to be calculated from theo prediction 
+expected_bkgreg_yield = nti-nti_sigreg
 
 bins = np.linspace(myy_low,myy_high,int(myy_high-myy_low))
-#values,_,__=plt.hist(_sig['myy'], bins, color='firebrick',
- #                    histtype='step',
- #                    label=r'$H$\rightarrow \gamma\gamma$ signal')
-#                     weights=utils.get_w(_sig['pred']))
 #sig_int=utils.get_integral(values,bins)
+#print("signal yield", sig_int)
 #sig_int_sigrreg=utils.get_integral(values,bins,121,129)
 
-values,_,__=plt.hist(_bkg['myy'], bins, color='green',linestyle='--',
+values_bkg,edges,__=plt.hist(_bkg['myy'], bins, color='green',linestyle='--',
                      histtype='step',
-                     label=r'background')
-#                     weights=utils.get_w(_bkg['pred']))
-#bkg_int=utils.get_integral(values,bins)
-#bkg_int_sigreg = utils.get_integral(values,bins,121,129)
-#bkg_int_bkgreg = bkg_int - bkg_int_sigreg
+                     label=r'background',
+                     weights=expected_bkgreg_yield*utils.get_w(_bkg['pred']))
+bin_centers = 0.5 * (edges[:-1] + edges[1:])
 
-values,_,__=plt.hist(ti_data['myy'], bins, color='black',linestyle='--',
+plt.clf()
+
+# background:
+plt.errorbar(bin_centers, values_bkg, yerr=np.sqrt(values_bkg),fmt='.k',label='Expected background')
+#sig:
+values,_,__=plt.hist(_sig['myy'], bins, color='firebrick',
                      histtype='step',
-                     label=r'background')
+                     linewidth=2,
+                     label=r'H$\rightarrow \gamma\gamma$ signal',
+                     weights=expected_sigreg_yield*utils.get_w(_sig['pred']))
+# suppress TI data plot:
+#values,_,__=plt.hist(ti_data['myy'], bins, color='black',linestyle='--',
+#                     histtype='step',
+#                     label=r'background')
 #                     weights=utils.get_w(ti_data['pred']))
-#ti_int = utils.get_integral(values,bins)
-#ti_int_sigreg = utils.get_integral(values,bins,121,129)
-#ti_int_bkgreg = ti_int-ti_int_sigreg
+
+
+plt.legend(bbox_to_anchor=(1.0, 1.0), loc="upper right",prop={'size': use_legend_font_size},frameon=False)
+# plt.text(xminrange+0.015*xspan, ymaxrange-0.1*yspan,"CHAOS",fontsize=use_font_size, verticalalignment="bottom", color='black')
+plt.text(xminrange+0.35*xspan, ymaxrange-0.35*yspan,r'$\int$L=10 fb$^{-1}$,$\sqrt{s}$=13 TeV',fontsize=use_font_size, verticalalignment="bottom", color='black')
+plt.text(xmaxrange+0.01*xspan,yminrange+0.01*xspan, "CERN Open Data + FindTheHiggs", fontsize=14, color='gray',verticalalignment="bottom",rotation="vertical")
 
 plt.xlabel(r'm$_{\gamma\gamma}$ [GeV]',horizontalalignment='right', x=1.0)
 plt.ylabel('Events/1 GeV',horizontalalignment='right', y=1.0)
 
-plt.xlim([myy_low,myy_high])
+plt.ylim([yminrange,ymaxrange])
+plt.xlim([xminrange,xmaxrange])
 plt.savefig("myy.png", bbox_inches='tight', dpi=500)
 plt.savefig("myy.pdf", bbox_inches='tight')
 plt.show()

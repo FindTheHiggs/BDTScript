@@ -22,5 +22,8 @@ python bdt_ana.py
 
 Example plot:
 
+<div align="center">
+    <img src="figures/myy.png" width="400px"</img> 
+</div>
 
 
