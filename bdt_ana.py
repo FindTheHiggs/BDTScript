@@ -36,69 +36,132 @@ plt.savefig("roc.png", bbox_inches='tight')
 plt.savefig("roc.pdf", bbox_inches='tight')
 plt.show()
 
-# discriminant 
-plt.figure()
-bins = np.linspace(0,1,51)
+#-----------------------------------------------------------------------
+
 _sig=data[data['label']==1]
 _bkg=data[data['label']==0]
+
+#-----------------------------------------------------------------------
+
+# discriminant 
+plt.figure()
+
+myy_sig_low = 121
+myy_sig_high = 129
+ti_data_sb_low=ti_data[(ti_data['myy']<myy_sig_low)]
+ti_data_sb_high=ti_data[(ti_data['myy']>myy_sig_high)]
+ti_data_sb = pd.concat([ti_data_sb_low,ti_data_sb_high], ignore_index=True)
+
+bkg_sb_low=_bkg[(_bkg['myy']<myy_sig_low)]
+bkg_sb_high=_bkg[(_bkg['myy']>myy_sig_high)]
+bkg_sb = pd.concat([bkg_sb_low,bkg_sb_high], ignore_index=True)
+
+bins = np.linspace(0,1,51)
+
+values_ti_data,edges,__=plt.hist(ti_data_sb['pred'], bins, color='green',linestyle='--',
+                                 histtype='step',
+                                 label=r'Data',
+                                 weights=utils.get_w(ti_data_sb['pred']))
+bin_centers = 0.5 * (edges[:-1] + edges[1:])
+
+plt.clf()
+
+#sig:
 values,_,__=plt.hist(_sig['pred'], bins, color='firebrick',
                      histtype='step',
-                     label=r'gg$\rightarrow$H$\rightarrow \gamma\gamma$',
+                     linewidth=2,
+                     label=r'H$\rightarrow \gamma\gamma$ signal',
                      weights=utils.get_w(_sig['pred']))
-
-values,_,__=plt.hist(_bkg['pred'], bins, color='green',linestyle='--',
+# background:
+values,_,__=plt.hist(bkg_sb['pred'], bins, color='green',
+                     linestyle='--',
                      histtype='step',
-                     label=r'background',
-                     weights=utils.get_w(_bkg['pred']))
+                     linewidth=2,
+                     label=r'Background side-band',
+                     weights=utils.get_w(bkg_sb['pred']))
+# TI data
+n_ti_data=ti_data_sb.shape[0]
+plt.errorbar(bin_centers, values_ti_data, yerr=np.sqrt(1/n_ti_data)*np.sqrt(values_ti_data),fmt='.k',label='Data', markersize=8)
 
-values,_,__=plt.hist(ti_data['pred'], bins, color='black',linestyle='--',
-                     histtype='step',
-                     label=r'background',
-                     weights=utils.get_w(ti_data['pred']))
+###################
+##values,_,__=plt.hist(_sig['pred'], bins, color='firebrick',
+##                     histtype='step',
+##                     label=r'gg$\rightarrow$H$\rightarrow \gamma\gamma$',
+##                     weights=utils.get_w(_sig['pred']))
+##
+##values,_,__=plt.hist(_bkg['pred'], bins
+##                     , color='green',linestyle='--',
+##                     histtype='step',
+##                     label=r'background',
+##                     weights=utils.get_w(_bkg['pred']))
+##
+##values,_,__=plt.hist(ti_data['pred'], bins, color='black',linestyle='--',
+##                     histtype='step',
+##                     label=r'background',
+##                     weights=utils.get_w(ti_data['pred']))
+##
 
-plt.xlabel('ML discriminant',horizontalalignment='right', x=1.0)
-plt.ylabel('Fraction of events/0.02',horizontalalignment='right', y=1.0)
+# ------ axis & text settings  -----------------------------
 
+xminrange=0.0
+xmaxrange=1.0
+xspan=xmaxrange-xminrange
+
+plt.xlim([0.0, xmaxrange])
+
+# ------------------------------ lin scale -----------------------------
 yminrange=0.0
 ymaxrange=0.1311
 yspan=ymaxrange-yminrange
-xminrange=0.0
-xmaxrange=1.0
-xrange=xmaxrange-xminrange
-plt.xlim([0.0, xmaxrange])
+stamp_x = xminrange+0.015*xspan
+stamp_y = ymaxrange-0.1*yspan
+lum_x = xminrange+0.35*xspan
+lum_y = ymaxrange-0.45*yspan
+epsilon_xtext = 0.01
+epsilon_ytext = 0.01
+plt.ylabel('Fraction of events/0.02',horizontalalignment='right', y=1.0)
+# ------------------------------ log scale -----------------------------
+dolog = True
+if (dolog):
+    plt.yscale('log')
+    yminrange=0.0001
+    ymaxrange=0.9
+    yspan=np.log10(ymaxrange)-np.log10(yminrange)
+    print('yspan is:',yspan)
+    stamp_y = 0.5
+    lum_y = 0.05
+    epsilon_ytext = 0.
+
+# ---------------------------------------- -----------------------------
 plt.ylim([yminrange, ymaxrange])
+plt.legend(bbox_to_anchor=(1.0, 1.0), loc="upper right",prop={'size': use_legend_font_size},frameon=False)
+
+plt.text(stamp_x,stamp_y ,"CHAOS",fontsize=use_font_size, verticalalignment="bottom", color='black')
+plt.text(lum_x, lum_y,r'$\int$L=10 fb$^{-1}$,$\sqrt{s}$=13 TeV',fontsize=use_font_size, verticalalignment="bottom", color='black')
+plt.text(xmaxrange+epsilon_xtext*xspan,yminrange+epsilon_ytext*yspan, "CERN Open Data + FindTheHiggs", fontsize=14, color='gray',verticalalignment="bottom",rotation="vertical")
+
+plt.xlabel('ML discriminant',horizontalalignment='right', x=1.0)
+
 
 plt.savefig("bdt_disc.png", bbox_inches='tight', dpi=500)
 plt.savefig("bdt_disc.pdf", bbox_inches='tight')
 plt.show()  
 
-# finally, myy plot for events passing the cut
-plt.figure()
+#-----------------------------------------------------------------------
+# S and B normalization 
+# TODO: set
 pred_cut=0.85
-
 
 myy_low=105.
 myy_high=160.
 myy_sig_low=121.
-myy_sig_high=129.
-
-# plot boundary settings: 
-yminrange=0.0
-ymaxrange=38.0
-yspan=ymaxrange-yminrange
-xminrange=myy_low
-xmaxrange=myy_high
-xspan=xmaxrange-xminrange
-
+myy_sig_high=129
 
 data=(data[data['pred']>pred_cut])
 data=data[(data['myy']>myy_low) & (data['myy']<myy_high)]
 
 ti_data=ti_data[ti_data['pred']>pred_cut]
 ti_data=ti_data[(ti_data['myy']>myy_low) & (ti_data['myy']<myy_high)]
-
-_sig=data[data['label']==1]
-_bkg=data[data['label']==0]
 
 nsig_sigreg = _sig[(_sig['myy']>myy_sig_low) & (_sig['myy']<myy_sig_high)].shape[0]
 nbkg_sigreg= _bkg[(_bkg['myy']>myy_sig_low) & (_bkg['myy']<myy_sig_high)].shape[0]
@@ -111,39 +174,81 @@ print("ntni data: total, sig region:", nti,nti_sigreg)
 
 # set norm factors for sig and BKG predictions, based on TI data:
 expected_sigreg_yield = 120. # to be calculated from theo prediction 
-expected_bkgreg_yield = nti-nti_sigreg
+expected_bkgreg_yield = (nti-nti_sigreg)*(1.+nbkg_sigreg/nbkg)
 
 bins = np.linspace(myy_low,myy_high,int(myy_high-myy_low))
 #sig_int=utils.get_integral(values,bins)
 #print("signal yield", sig_int)
 #sig_int_sigrreg=utils.get_integral(values,bins,121,129)
 
-values_bkg,edges,__=plt.hist(_bkg['myy'], bins, color='green',linestyle='--',
+#-----------------------------------------------------------------------
+
+#-----------------------------------------------------------------------
+# finally, myy plot for events passing the cut
+plt.figure()
+
+# plot boundary settings: 
+yminrange=0.0
+ymaxrange=38.0
+yspan=ymaxrange-yminrange
+xminrange=myy_low
+xmaxrange=myy_high
+xspan=xmaxrange-xminrange
+
+
+##### v1: plot w/o TI data: 
+# 
+##values_bkg,edges,__=plt.hist(_bkg['myy'], bins, color='green',linestyle='--',
+##                     histtype='step',
+##                     label=r'background',
+##                     weights=expected_bkgreg_yield*utils.get_w(_bkg['pred']))
+##bin_centers = 0.5 * (edges[:-1] + edges[1:])
+##
+##plt.clf()
+##
+### background:
+##plt.errorbar(bin_centers, values_bkg, yerr=np.sqrt(values_bkg),fmt='.k',label='Expected background')
+###sig:
+##values,_,__=plt.hist(_sig['myy'], bins, color='firebrick',
+##                     histtype='step',
+##                     linewidth=2,
+##                     label=r'H$\rightarrow \gamma\gamma$ signal',
+##                     weights=expected_sigreg_yield*utils.get_w(_sig['pred']))
+##
+## plt.text(xminrange+0.35*xspan, ymaxrange-0.35*yspan,r'$\int$L=10 fb$^{-1}$,$\sqrt{s}$=13 TeV',fontsize=use_font_size, verticalalignment="bottom", color='black')
+
+##### v2: plot with TI data:
+yminrange=0.0
+ymaxrange=54.0
+yspan=ymaxrange-yminrange
+
+values_ti_data,edges,__=plt.hist(ti_data['myy'], bins, color='green',linestyle='--',
                      histtype='step',
-                     label=r'background',
-                     weights=expected_bkgreg_yield*utils.get_w(_bkg['pred']))
+                     label=r'Data')
 bin_centers = 0.5 * (edges[:-1] + edges[1:])
 
 plt.clf()
 
-# background:
-plt.errorbar(bin_centers, values_bkg, yerr=np.sqrt(values_bkg),fmt='.k',label='Expected background')
 #sig:
 values,_,__=plt.hist(_sig['myy'], bins, color='firebrick',
                      histtype='step',
                      linewidth=2,
                      label=r'H$\rightarrow \gamma\gamma$ signal',
                      weights=expected_sigreg_yield*utils.get_w(_sig['pred']))
-# suppress TI data plot:
-#values,_,__=plt.hist(ti_data['myy'], bins, color='black',linestyle='--',
-#                     histtype='step',
-#                     label=r'background')
-#                     weights=utils.get_w(ti_data['pred']))
-
+# background:
+values,_,__=plt.hist(_bkg['myy'], bins, color='green',
+                     linestyle='--',
+                     histtype='step',
+                     linewidth=2,
+                     label=r'Estimated background',
+                     weights=expected_bkgreg_yield*utils.get_w(_bkg['pred']))
+# TI data
+plt.errorbar(bin_centers, values_ti_data, yerr=np.sqrt(values_ti_data),fmt='.k',label='Data', markersize=8)
+plt.text(xminrange+0.35*xspan, ymaxrange-0.45*yspan,r'$\int$L=10 fb$^{-1}$,$\sqrt{s}$=13 TeV',fontsize=use_font_size, verticalalignment="bottom", color='black')
+#------------------------------------------------------------------------------------------------
 
 plt.legend(bbox_to_anchor=(1.0, 1.0), loc="upper right",prop={'size': use_legend_font_size},frameon=False)
-# plt.text(xminrange+0.015*xspan, ymaxrange-0.1*yspan,"CHAOS",fontsize=use_font_size, verticalalignment="bottom", color='black')
-plt.text(xminrange+0.35*xspan, ymaxrange-0.35*yspan,r'$\int$L=10 fb$^{-1}$,$\sqrt{s}$=13 TeV',fontsize=use_font_size, verticalalignment="bottom", color='black')
+plt.text(xminrange+0.015*xspan, ymaxrange-0.1*yspan,"CHAOS",fontsize=use_font_size, verticalalignment="bottom", color='black')
 plt.text(xmaxrange+0.01*xspan,yminrange+0.01*xspan, "CERN Open Data + FindTheHiggs", fontsize=14, color='gray',verticalalignment="bottom",rotation="vertical")
 
 plt.xlabel(r'm$_{\gamma\gamma}$ [GeV]',horizontalalignment='right', x=1.0)
